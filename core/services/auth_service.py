@@ -1,16 +1,29 @@
-from datetime import datetime, timedelta, timezone
+from __future__ import annotations
+
+from datetime import datetime, timezone
 
 import jwt
-from django.conf import settings
-from django.contrib.auth import get_user_model
 from google.auth.transport import requests
 from google.oauth2 import id_token
+from sqlalchemy.orm import Session
 
+from core.database.session import SessionLocal
 from core.schemas.auth import AuthUserResponse, GoogleLoginResponse
+from core.repositories.user_repository import UserRepository
 from core.settings.google_oauth import GOOGLE_CLIENT_ID, GOOGLE_TOKEN_ISSUERS
+from core.settings.jwt_config import (
+    JWT_ACCESS_TOKEN_EXPIRE_DELTA,
+    JWT_ALGORITHM,
+    JWT_SECRET_KEY,
+)
 
 
 class AuthService:
+    def __init__(self, db: Session | None = None):
+        self.db = db or SessionLocal()
+        self._owns_db = db is None
+        self.user_repository = UserRepository()
+
     def verify_google_token(self, google_token: str) -> dict:
         if not GOOGLE_CLIENT_ID:
             raise ValueError("GOOGLE_CLIENT_ID is not configured")
@@ -36,64 +49,95 @@ class AuthService:
         return token_info
 
     def login_with_google(self, google_token: str) -> GoogleLoginResponse:
-        google_user = self.verify_google_token(google_token)
-        user = self._get_or_create_user(google_user)
-        access_token = self._create_access_token(user)
+        try:
+            google_user = self.verify_google_token(google_token)
+            user = self.get_or_create_user(google_user)
+            access_token = self.create_access_token(user)
 
-        return GoogleLoginResponse(
-            access_token=access_token,
-            user=AuthUserResponse(
-                id=user.id,
-                email=user.email,
-                name=user.get_full_name() or user.email,
-                first_name=user.first_name or None,
-                last_name=user.last_name or None,
-            ),
-        )
+            return GoogleLoginResponse(
+                access_token=access_token,
+                user=self._build_auth_user_response(user),
+            )
+        finally:
+            self._close_owned_session()
 
-    def _get_or_create_user(self, google_user: dict):
-        User = get_user_model()
-
+    def get_or_create_user(self, google_user: dict):
         email = google_user["email"].strip().lower()
-        full_name = google_user.get("name") or email
-        first_name = google_user.get("given_name") or full_name.split(" ", 1)[0]
-        last_name = google_user.get("family_name") or ""
+        full_name = (google_user.get("name") or email).strip()
+        db = self._get_db()
 
-        user, created = User.objects.get_or_create(
-            username=email,
-            defaults={
-                "email": email,
-                "first_name": first_name[:150],
-                "last_name": last_name[:150],
-            },
+        user, created = self.user_repository.get_or_create(
+            db,
+            email=email,
+            full_name=full_name,
         )
 
-        changed = False
-        if user.email != email:
-            user.email = email
-            changed = True
-        if user.first_name != first_name[:150]:
-            user.first_name = first_name[:150]
-            changed = True
-        if user.last_name != last_name[:150]:
-            user.last_name = last_name[:150]
-            changed = True
-        if created:
-            user.set_unusable_password()
-            changed = True
-
-        if changed:
-            user.save()
+        if not created:
+            changes = {}
+            if user.full_name != full_name:
+                changes["full_name"] = full_name
+            if not user.is_active:
+                changes["is_active"] = True
+            if changes:
+                user = self.user_repository.update(db, user, changes)
 
         return user
 
-    def _create_access_token(self, user) -> str:
+    def create_access_token(self, user) -> str:
         now = datetime.now(timezone.utc)
         payload = {
             "sub": str(user.id),
             "email": user.email,
-            "name": user.get_full_name() or user.email,
+            "name": user.full_name or user.email,
             "iat": now,
-            "exp": now + timedelta(hours=24),
+            "exp": now + JWT_ACCESS_TOKEN_EXPIRE_DELTA,
         }
-        return jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+        return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+    def validate_access_token(self, token: str) -> dict:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+
+        user_id = payload.get("sub")
+        if not user_id:
+            raise ValueError("Token payload does not include user id")
+
+        return payload
+
+    def get_authenticated_user(self, token: str):
+        try:
+            payload = self.validate_access_token(token)
+            user_id = int(payload["sub"])
+            user = self.user_repository.get_by_id(self._get_db(), user_id)
+
+            if not user or not user.is_active:
+                raise ValueError("Authenticated user not found")
+
+            return user
+        finally:
+            self._close_owned_session()
+
+    def get_authenticated_user_response(self, token: str) -> AuthUserResponse:
+        user = self.get_authenticated_user(token)
+        return self._build_auth_user_response(user)
+
+    def _build_auth_user_response(self, user) -> AuthUserResponse:
+        first_name = user.first_name or None
+        last_name = user.last_name or None
+
+        return AuthUserResponse(
+            id=user.id,
+            email=user.email,
+            name=user.full_name or user.email,
+            first_name=first_name,
+            last_name=last_name,
+        )
+
+    def _close_owned_session(self) -> None:
+        if self._owns_db and self.db is not None:
+            self.db.close()
+            self.db = None
+
+    def _get_db(self) -> Session:
+        if self.db is None:
+            self.db = SessionLocal()
+        return self.db

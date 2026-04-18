@@ -19,3 +19,13 @@ class User(Base):
         onupdate=datetime.utcnow,
         nullable=False,
     )
+
+    @property
+    def first_name(self) -> str:
+        return self.full_name.strip().split(" ", 1)[0] if self.full_name else ""
+
+    @property
+    def last_name(self) -> str:
+        if not self.full_name or " " not in self.full_name.strip():
+            return ""
+        return self.full_name.strip().split(" ", 1)[1]
