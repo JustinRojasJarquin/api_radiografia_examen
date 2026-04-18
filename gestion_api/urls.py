@@ -5,10 +5,12 @@ from core.api.routes.radiography_record_routes import (
     radiography_record_detail,
     radiography_record_list_create,
 )
+from core.api.routes.auth_routes import google_login
 
 urlpatterns = [
     path("admin/", admin.site.urls),
 
+    path("api/v1/auth/google/login", google_login, name="google-login"),
     path("api/v1/records/", radiography_record_list_create, name="records-list-create"),
     path("api/v1/records/<int:record_id>/", radiography_record_detail, name="records-detail"),
 ]
