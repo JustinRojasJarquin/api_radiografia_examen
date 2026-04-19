@@ -6,7 +6,7 @@ cffi==2.0.0
 charset-normalizer==3.4.7
 cloudinary==1.44.1
 cryptography==46.0.7
-Django==6.0.4
+Django==5.2
 djangorestframework==3.17.1
 drf-yasg==1.21.15
 google-auth==2.49.2
