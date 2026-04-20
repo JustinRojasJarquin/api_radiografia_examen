@@ -17,7 +17,8 @@ from core.utils.exceptions import AuthenticationException
 from core.utils.pagination import get_pagination_params
 from core.utils.filters import apply_record_filters
 from core.database.models.radiography_record import RadiographyRecord
-
+from core.api.dependencies import require_authenticated_user
+from core.services.file_service import generate_signed_image_url
 
 service = RadiographyRecordService()
 
@@ -116,6 +117,39 @@ def radiography_record_detail(request, record_id: int):
         return JsonResponse({"error": str(exc)}, status=401)
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=404)
+    except Exception as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    finally:
+        db.close()
+        
+@csrf_exempt
+def radiography_record_signed_image(request, record_id: int):
+    db = SessionLocal()
+
+    try:
+        if request.method != "GET":
+            return JsonResponse({"error": "Method not allowed"}, status=405)
+
+        current_user = require_authenticated_user(request)
+        record = service.get_record_detail(db, record_id)
+
+        signed_url = generate_signed_image_url(
+            request=request,
+            user_id=current_user.id,
+            record_id=record.id,
+            image_url=record.image_url,
+        )
+
+        return JsonResponse(
+            {
+                "record_id": record.id,
+                "signed_url": signed_url,
+            },
+            status=200,
+        )
+
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=401)
     except Exception as exc:
         return JsonResponse({"error": str(exc)}, status=400)
     finally:
