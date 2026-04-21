@@ -32,8 +32,17 @@ export default function Login() {
         token: response.credential,
       });
 
+      console.log("Login response:", res.data);
+
+      // 🔥 GUARDAR TOKEN
       localStorage.setItem("token", res.data.access_token);
+
+      // 🔥 GUARDAR USUARIO (esto es lo nuevo)
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      // 🚀 Redirigir
       window.location.href = "/records";
+
     } catch (error: any) {
       console.error("Google login error:", error);
       console.log("Backend response:", error?.response?.data);
@@ -46,17 +55,21 @@ export default function Login() {
       <div style={styles.overlay}>
         <div style={styles.card}>
           <div style={styles.logoCircle}>+</div>
+
           <h1 style={styles.title}>PLACAS RADIOGRAFICAS</h1>
+
           <p style={styles.subtitle}>
-           Acceso clínico seguro para registros radiográficos
+            Acceso clínico seguro para registros radiográficos
           </p>
 
           <div style={styles.loginBox}>
-            <p style={styles.loginLabel}>Iniciar sesion con google</p>
+            <p style={styles.loginLabel}>Iniciar sesión con Google</p>
+
             <div style={styles.googleButtonWrapper}>
               <div id="googleBtn"></div>
             </div>
           </div>
+
         </div>
       </div>
     </div>

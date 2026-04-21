@@ -2,9 +2,12 @@ import { Link, useLocation } from "react-router-dom";
 
 export default function Navbar() {
   const location = useLocation();
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     window.location.href = "/";
   };
 
@@ -15,35 +18,49 @@ export default function Navbar() {
       <div style={styles.brand}>
         <div style={styles.brandIcon}>+</div>
         <div>
-          <div style={styles.brandTitle}>API Placas Radiográficas</div>
-          <div style={styles.brandSubtitle}>Web Información Clínica</div>
+          <div style={styles.brandTitle}>EDUS Radiography</div>
+          <div style={styles.brandSubtitle}>Clinical Information System</div>
         </div>
       </div>
 
-      <div style={styles.links}>
-        <Link
-          to="/records"
-          style={{
-            ...styles.link,
-            ...(isActive("/records") ? styles.activeLink : {}),
-          }}
-        >
-          Registros
-        </Link>
+      <div style={styles.rightSection}>
+        {user && (
+          <div style={styles.userBox}>
+            <div style={styles.avatar}>
+              {user.first_name ? user.first_name.charAt(0).toUpperCase() : "U"}
+            </div>
+            <div>
+              <div style={styles.userName}>{user.name}</div>
+              <div style={styles.userEmail}>{user.email}</div>
+            </div>
+          </div>
+        )}
 
-        <Link
-          to="/records/create"
-          style={{
-            ...styles.link,
-            ...(isActive("/records/create") ? styles.activeLink : {}),
-          }}
-        >
-          Crear registro
-        </Link>
+        <div style={styles.links}>
+          <Link
+            to="/records"
+            style={{
+              ...styles.link,
+              ...(isActive("/records") ? styles.activeLink : {}),
+            }}
+          >
+            Records
+          </Link>
 
-        <button onClick={handleLogout} style={styles.logoutButton}>
-          Cerrar sesión
-        </button>
+          <Link
+            to="/records/create"
+            style={{
+              ...styles.link,
+              ...(isActive("/records/create") ? styles.activeLink : {}),
+            }}
+          >
+            Create Record
+          </Link>
+
+          <button onClick={handleLogout} style={styles.logoutButton}>
+            Logout
+          </button>
+        </div>
       </div>
     </nav>
   );
@@ -61,6 +78,8 @@ const styles = {
     position: "sticky" as const,
     top: 0,
     zIndex: 100,
+    flexWrap: "wrap" as const,
+    gap: "1rem",
   },
   brand: {
     display: "flex",
@@ -86,6 +105,40 @@ const styles = {
   brandSubtitle: {
     fontSize: "0.8rem",
     opacity: 0.85,
+  },
+  rightSection: {
+    display: "flex",
+    alignItems: "center",
+    gap: "1rem",
+    flexWrap: "wrap" as const,
+    justifyContent: "flex-end",
+  },
+  userBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.75rem",
+    background: "rgba(255,255,255,0.12)",
+    padding: "0.6rem 0.9rem",
+    borderRadius: "12px",
+  },
+  avatar: {
+    width: "36px",
+    height: "36px",
+    borderRadius: "50%",
+    background: "#ffffff",
+    color: "#0b3d91",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 700,
+  },
+  userName: {
+    fontWeight: 700,
+    fontSize: "0.9rem",
+  },
+  userEmail: {
+    fontSize: "0.78rem",
+    opacity: 0.9,
   },
   links: {
     display: "flex",
