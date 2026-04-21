@@ -1,6 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from core.database.base import Base
+from core.database.models import User, RadiographyRecord
+
 DATABASE_URL = "sqlite:///./db.sqlite3"
 
 engine = create_engine(
@@ -13,3 +16,5 @@ SessionLocal = sessionmaker(
     autoflush=False,
     bind=engine
 )
+
+Base.metadata.create_all(bind=engine)

@@ -30,4 +30,5 @@ def google_login(request):
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=401)
     except Exception as exc:
-        return JsonResponse({"error": str(exc)}, status=400)
+        print("GOOGLE LOGIN ERROR:", repr(exc))
+    return JsonResponse({"error": str(exc)}, status=400)
