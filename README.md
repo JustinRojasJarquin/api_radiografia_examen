@@ -19,6 +19,8 @@ CLOUDINARY_CLOUD_NAME=tu_cloud_name
 CLOUDINARY_API_KEY=tu_api_key
 CLOUDINARY_API_SECRET=tu_api_secret
 GOOGLE_CLIENT_ID=tu_google_client_id
+SIGNED_URL_SECRET=clave_secreta_para_firmar_urls
+SIGNED_URL_EXPIRE_MINUTES=5
 ```
 
 Crear la base de datos y correr el proyecto:
@@ -40,6 +42,8 @@ La documentación Swagger estará disponible en: `http://localhost:8000/swagger/
 | GET | `/api/v1/records/{id}/` | Detalle de un registro | JWT |
 | PUT | `/api/v1/records/{id}/` | Actualizar registro | JWT |
 | DELETE | `/api/v1/records/{id}/` | Eliminar registro | JWT |
+| GET | `/api/v1/records/{id}/signed-image-url/` | Obtener URL firmada de imagen (expira en 5 min) | JWT |
+| GET | `/api/v1/images/view/?token=...` | Ver imagen usando URL firmada | No |
 
 ## Filtros disponibles en GET /records
 
