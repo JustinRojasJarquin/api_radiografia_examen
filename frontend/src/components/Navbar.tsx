@@ -18,7 +18,7 @@ export default function Navbar() {
       <div style={styles.brand}>
         <div style={styles.brandIcon}>+</div>
         <div>
-          <div style={styles.brandTitle}>EDUS Radiography</div>
+          <div style={styles.brandTitle}>Radiography</div>
           <div style={styles.brandSubtitle}>Clinical Information System</div>
         </div>
       </div>

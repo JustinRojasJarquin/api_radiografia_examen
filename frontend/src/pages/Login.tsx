@@ -34,13 +34,13 @@ export default function Login() {
 
       console.log("Login response:", res.data);
 
-      // 🔥 GUARDAR TOKEN
+      
       localStorage.setItem("token", res.data.access_token);
 
-      // 🔥 GUARDAR USUARIO (esto es lo nuevo)
+     
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      // 🚀 Redirigir
+      
       window.location.href = "/records";
 
     } catch (error: any) {
