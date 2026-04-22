@@ -18,8 +18,8 @@ export default function Navbar() {
       <div style={styles.brand}>
         <div style={styles.brandIcon}>+</div>
         <div>
-          <div style={styles.brandTitle}>Radiography</div>
-          <div style={styles.brandSubtitle}>Clinical Information System</div>
+          <div style={styles.brandTitle}>Radiografias</div>
+          <div style={styles.brandSubtitle}>Sistema de información clínica</div>
         </div>
       </div>
 
@@ -44,7 +44,7 @@ export default function Navbar() {
               ...(isActive("/records") ? styles.activeLink : {}),
             }}
           >
-            Records
+            Registros actuales
           </Link>
 
           <Link
@@ -54,11 +54,11 @@ export default function Navbar() {
               ...(isActive("/records/create") ? styles.activeLink : {}),
             }}
           >
-            Create Record
+            Crear registro
           </Link>
 
           <button onClick={handleLogout} style={styles.logoutButton}>
-            Logout
+            Cerrar Sesión 
           </button>
         </div>
       </div>

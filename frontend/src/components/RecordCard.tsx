@@ -12,7 +12,7 @@ export default function RecordCard({ record, onDelete, onViewImage }: Props) {
       <div style={styles.topRow}>
         <div>
           <h3 style={styles.name}>{record.patient_full_name}</h3>
-          <p style={styles.meta}>Record ID: #{record.id}</p>
+          <p style={styles.meta}>ID del registro: #{record.id}</p>
         </div>
 
         <span style={styles.badge}>Protegido</span>
