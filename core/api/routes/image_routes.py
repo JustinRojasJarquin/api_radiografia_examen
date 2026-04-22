@@ -1,15 +1,27 @@
 import jwt
 from django.http import HttpResponseRedirect, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework.decorators import api_view
 
 from core.settings.security import verify_signed_image_token
 
 
-@csrf_exempt
+@swagger_auto_schema(
+    method="get",
+    operation_summary="Ver imagen con URL firmada",
+    operation_description="Redirige a la imagen en Cloudinary si el token firmado es válido. El token expira en 5 minutos.",
+    manual_parameters=[
+        openapi.Parameter("token", openapi.IN_QUERY, description="Token JWT firmado", type=openapi.TYPE_STRING, required=True),
+    ],
+    responses={
+        302: openapi.Response("Redirección a la imagen en Cloudinary"),
+        400: openapi.Response("Token inválido o faltante"),
+        401: openapi.Response("Token expirado"),
+    },
+)
+@api_view(["GET"])
 def view_signed_image(request):
-    if request.method != "GET":
-        return JsonResponse({"error": "Method not allowed"}, status=405)
-
     token = request.GET.get("token")
     if not token:
         return JsonResponse({"error": "Missing token"}, status=400)
